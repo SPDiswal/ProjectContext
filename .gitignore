@@ -6,7 +6,6 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
 *.war
 *.ear
 
@@ -66,9 +65,6 @@ crashlytics-build.properties
 
 # Files for the Dalvik VM
 *.dex
-
-# Java class files
-*.class
 
 # Generated files
 bin/
