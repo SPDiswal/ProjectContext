@@ -24,11 +24,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Kø"
-            android:id="@+id/trafficLevel3" android:layout_gravity="center_horizontal" android:checked="false"/>
+            android:id="@+id/trafficLevel3" android:layout_gravity="center_horizontal" android:checked="false"
+            android:onClick="onTrafficLevelJam"/>
     <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Langsom"
-                 android:id="@+id/trafficLevel2" android:layout_gravity="center_horizontal" android:checked="false"/>
+                 android:id="@+id/trafficLevel2" android:layout_gravity="center_horizontal" android:checked="false"
+                 android:onClick="onTrafficLevelSlow"/>
     <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Normal"
-                 android:id="@+id/trafficLevel1" android:layout_gravity="center_horizontal" android:checked="false"/>
+                 android:id="@+id/trafficLevel1" android:layout_gravity="center_horizontal" android:checked="false"
+                 android:onClick="onTrafficLevelNormal"/>
     <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
