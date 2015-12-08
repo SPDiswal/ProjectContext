@@ -8,11 +8,11 @@ public class Sample
 {
     private double latitude;
     private double longitude;
-    private double distance;
+    private int distance;
     private Date time;
-    private TrafficLevel traffic;
+    private int traffic;
 
-    public Sample(Location location, float distance, Date time, TrafficLevel traffic)
+    public Sample(Location location, int distance, Date time, int traffic)
     {
         this.latitude = location.getLatitude();
         this.longitude = location.getLongitude();
@@ -31,7 +31,7 @@ public class Sample
         return longitude;
     }
 
-    public double getDistance()
+    public int getDistance()
     {
         return distance;
     }
@@ -41,8 +41,13 @@ public class Sample
         return time;
     }
 
-    public TrafficLevel getTraffic()
+    public int getTraffic()
     {
         return traffic;
+    }
+
+    public void setTraffic(int traffic)
+    {
+        this.traffic = traffic;
     }
 }

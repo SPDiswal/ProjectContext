@@ -30,14 +30,14 @@ public class BusRouteLoader
         tangkrogen5a.add(new BusStop("Silkeborgvej", at(56.155291, 10.182462)));
     }
 
-    public List<BusStop> getMarienlund()
+    public BusRoute getMarienlund()
     {
-        return marienlund5a;
+        return new BusRoute(marienlund5a);
     }
 
-    public List<BusStop> getTangkrogen()
+    public BusRoute getTangkrogen()
     {
-        return tangkrogen5a;
+        return new BusRoute(tangkrogen5a);
     }
 
     private static Location at(double latitude, double longitude)
