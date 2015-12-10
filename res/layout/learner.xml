@@ -16,10 +16,8 @@
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="150 m"
             android:id="@+id/distance" android:layout_gravity="center_horizontal"/>
-    <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Forrige"
-            android:id="@+id/goToPrevious" android:layout_gravity="center_horizontal"/>
     <Button android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Næste"
-            android:id="@+id/goToNext" android:layout_gravity="center_horizontal"/>
+            android:id="@+id/goToNext" android:layout_gravity="center_horizontal" android:onClick="onGoingToNext"/>
     <RadioButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -30,7 +28,7 @@
                  android:id="@+id/trafficLevel2" android:layout_gravity="center_horizontal" android:checked="false"
                  android:onClick="onTrafficLevelSlow"/>
     <RadioButton android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Normal"
-                 android:id="@+id/trafficLevel1" android:layout_gravity="center_horizontal" android:checked="false"
+                 android:id="@+id/trafficLevel1" android:layout_gravity="center_horizontal" android:checked="true"
                  android:onClick="onTrafficLevelNormal"/>
     <Button
             android:layout_width="wrap_content"

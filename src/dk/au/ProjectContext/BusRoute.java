@@ -7,10 +7,17 @@ import java.util.*;
 public class BusRoute implements Iterable<BusStop>
 {
     private List<BusStop> busStops;
+    private String name;
 
-    public BusRoute(List<BusStop> busStops)
+    public BusRoute(List<BusStop> busStops, String name)
     {
         this.busStops = busStops;
+        this.name = name;
+    }
+
+    public String getName()
+    {
+        return name;
     }
 
     public BusStop first()

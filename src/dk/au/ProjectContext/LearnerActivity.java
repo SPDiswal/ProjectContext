@@ -3,10 +3,12 @@ package dk.au.ProjectContext;
 import android.app.Activity;
 import android.content.Context;
 import android.location.*;
-import android.os.Bundle;
+import android.os.*;
 import android.view.View;
 import android.widget.*;
 
+import java.io.*;
+import java.text.*;
 import java.util.*;
 
 public class LearnerActivity extends Activity
@@ -14,20 +16,21 @@ public class LearnerActivity extends Activity
     public static final int SAMPLE_TIME = 2000; // Milliseconds.
     public static final int DISTANCE_THRESHOLD = 40; // Metres.
 
+    private int traffic = 0;
+    private boolean goingToNext;
+
     private BusRouteLoader busRoutes = new BusRouteLoader();
 
     private Location currentLocation;
     private BusRoute currentBusRoute;
     private BusStop nextBusStop;
 
-    private int traffic;
-
-    private List<Sample> samples = new ArrayList<Sample>();
-
     private Map<BusStop, List<Sample>> models = new HashMap<BusStop, List<Sample>>();
 
     private LocationManager locationManager;
     private LocationListener listener;
+
+    private File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
     @Override
     public void onCreate(final Bundle savedInstanceState)
@@ -57,7 +60,6 @@ public class LearnerActivity extends Activity
                     addSamplesToModels();
 
                     int distanceToNextBusStop = (int) Math.floor(currentLocation.distanceTo(nextBusStop.getLocation()));
-
                     updateCurrentBusStop(distanceToNextBusStop);
                 }
             }
@@ -94,7 +96,8 @@ public class LearnerActivity extends Activity
 
     private Sample sample(int distanceToBusStop)
     {
-        return new Sample(currentLocation, distanceToBusStop, new Date(), traffic);
+        Date today = Calendar.getInstance().getTime();
+        return new Sample(currentLocation, distanceToBusStop, today, traffic);
     }
 
     private void updateCurrentBusStop(int distanceToNextBusStop)
@@ -104,21 +107,8 @@ public class LearnerActivity extends Activity
 
         if (distanceToNextBusStop < DISTANCE_THRESHOLD)
         {
-            List<Sample> samples = models.get(nextBusStop);
-
-            for (int i = 0; i < samples.size(); i++)
-            {
-                Sample sample = samples.get(i);
-                int trafficSum = 0;
-
-                for (int j = i; j < samples.size(); j++)
-                {
-                    trafficSum += samples.get(j).getTraffic();
-                }
-
-                int trafficAverage = (int) Math.floor((double) trafficSum / (double) (samples.size() - i));
-                sample.setTraffic(trafficAverage);
-            }
+            aggregateSamplesToAverages();
+            saveModel(nextBusStop);
 
             BusStop nextCandidateBusStop = currentBusRoute.next(nextBusStop);
 
@@ -128,12 +118,77 @@ public class LearnerActivity extends Activity
             }
             else
             {
-                currentBusRoute = null;
-                ((TextView) findViewById(R.id.distance)).setText("");
-
-                Toast.makeText(LearnerActivity.this, "Finished!", Toast.LENGTH_SHORT).show();
+                finished();
             }
         }
+    }
+
+    private void aggregateSamplesToAverages()
+    {
+        List<Sample> samples = models.get(nextBusStop);
+
+        for (int i = 0; i < samples.size(); i++)
+        {
+            Sample sample = samples.get(i);
+            int trafficSum = 0;
+
+            for (int j = i; j < samples.size(); j++)
+            {
+                trafficSum += samples.get(j).getTraffic();
+            }
+
+            int trafficAverage = (int) Math.floor((double) trafficSum / (double) (samples.size() - i));
+            sample.setTraffic(trafficAverage);
+        }
+    }
+
+    private boolean isExternalStorageAvailable()
+    {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
+    }
+
+    private void saveModel(BusStop busStop)
+    {
+        List<Sample> samples = models.get(busStop);
+        String busRouteName = currentBusRoute.getName();
+        String busStopName = busStop.getName();
+
+        DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
+        Date today = Calendar.getInstance().getTime();
+        String timeOfDay = formatter.format(today);
+
+        String fileName = timeOfDay + "-" + busRouteName.replace(" ", "-") + "-" + busStopName.replace(" ", "-");
+        File file = new File(path, fileName);
+
+        if (isExternalStorageAvailable())
+        {
+            try
+            {
+                FileWriter writer = new FileWriter(file, true);
+
+                for (Sample sample : samples)
+                {
+                    writer.write(sample.toString() + "\n");
+                }
+
+                writer.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void finished()
+    {
+        currentBusRoute = null;
+        ((TextView) findViewById(R.id.distance)).setText("");
+
+        findViewById(R.id.start).setVisibility(View.VISIBLE);
+
+        Toast.makeText(LearnerActivity.this, "Finished!", Toast.LENGTH_SHORT).show();
     }
 
     public void onStart(View view)
@@ -152,6 +207,7 @@ public class LearnerActivity extends Activity
 
             nextBusStop = currentBusRoute.first();
 
+            findViewById(R.id.start).setVisibility(View.GONE);
             Toast.makeText(this, "Go!", Toast.LENGTH_SHORT).show();
         }
         else
@@ -163,15 +219,32 @@ public class LearnerActivity extends Activity
     public void onTrafficLevelJam(View view)
     {
         traffic = 4;
+        goingToNext = false;
     }
 
     public void onTrafficLevelSlow(View view)
     {
         traffic = 2;
+        goingToNext = false;
     }
 
     public void onTrafficLevelNormal(View view)
     {
         traffic = 0;
+        goingToNext = false;
+    }
+
+    public void onGoingToNext(View view)
+    {
+        if (!goingToNext)
+        {
+            Toast.makeText(this, "Tap again to go to the next bus stop.", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            updateCurrentBusStop(0);
+        }
+
+        goingToNext = !goingToNext;
     }
 }

@@ -50,4 +50,9 @@ public class Sample
     {
         this.traffic = traffic;
     }
+
+    public String toString()
+    {
+        return latitude + "," + longitude + "," + distance + "," + time.getTime() + "," + traffic;
+    }
 }

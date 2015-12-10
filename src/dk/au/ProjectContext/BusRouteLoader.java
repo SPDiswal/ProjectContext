@@ -32,12 +32,12 @@ public class BusRouteLoader
 
     public BusRoute getMarienlund()
     {
-        return new BusRoute(marienlund5a);
+        return new BusRoute(marienlund5a, "5A for Marienlund");
     }
 
     public BusRoute getTangkrogen()
     {
-        return new BusRoute(tangkrogen5a);
+        return new BusRoute(tangkrogen5a, "5A for Tangkrogen");
     }
 
     private static Location at(double latitude, double longitude)
