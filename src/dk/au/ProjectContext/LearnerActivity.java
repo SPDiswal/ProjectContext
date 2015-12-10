@@ -163,7 +163,7 @@ public class LearnerActivity extends Activity
         Date today = Calendar.getInstance().getTime();
         String timeOfDay = formatter.format(today);
 
-        String fileName = timeOfDay + "-" + busRouteName.replace(" ", "-") + "-" + busStopName.replace(" ", "-");
+        String fileName = timeOfDay + "-" + busRouteName.replace(" ", "-") + "-" + busStopName.replace(" ", "-") + ".data";
         File file = new File(outputPath, fileName);
 
         if (isExternalStorageAvailable())
