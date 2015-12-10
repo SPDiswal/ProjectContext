@@ -30,13 +30,18 @@ public class LearnerActivity extends Activity
     private LocationManager locationManager;
     private LocationListener listener;
 
-    private File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+    private File outputPath = new File(Environment.getExternalStorageDirectory() + "/AUProjectContext");
 
     @Override
     public void onCreate(final Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.learner);
+
+        if (!outputPath.exists())
+        {
+            outputPath.mkdir();
+        }
 
         for (BusStop busStop : busRoutes.getTangkrogen())
         {
@@ -159,7 +164,7 @@ public class LearnerActivity extends Activity
         String timeOfDay = formatter.format(today);
 
         String fileName = timeOfDay + "-" + busRouteName.replace(" ", "-") + "-" + busStopName.replace(" ", "-");
-        File file = new File(path, fileName);
+        File file = new File(outputPath, fileName);
 
         if (isExternalStorageAvailable())
         {
@@ -187,6 +192,7 @@ public class LearnerActivity extends Activity
         ((TextView) findViewById(R.id.distance)).setText("");
 
         findViewById(R.id.start).setVisibility(View.VISIBLE);
+        findViewById(R.id.goToNext).setVisibility(View.GONE);
 
         Toast.makeText(LearnerActivity.this, "Finished!", Toast.LENGTH_SHORT).show();
     }
@@ -208,6 +214,8 @@ public class LearnerActivity extends Activity
             nextBusStop = currentBusRoute.first();
 
             findViewById(R.id.start).setVisibility(View.GONE);
+            findViewById(R.id.goToNext).setVisibility(View.VISIBLE);
+
             Toast.makeText(this, "Go!", Toast.LENGTH_SHORT).show();
         }
         else
