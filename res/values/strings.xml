@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ProjectContext</string>
+    <string name="appName">ProjectContext</string>
+    <string name="actionGo">Go</string>
+    <string name="actionOverrideNext">Next</string>
+    <string name="messageOverrideNextTapAgain">
+        Tap again to override your location and skip directly to the next stop.
+    </string>
+    <string name="actionLocatingProgress">Locating…</string>
+    <string name="ready">Ready!</string>
+    <string name="nextStopIsLabel">The next stop is</string>
 </resources>

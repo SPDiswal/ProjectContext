@@ -1,14 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
-              android:layout_width="fill_parent"
-              android:layout_height="fill_parent"
->
-    <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Placeholder for the awesome"
-            android:id="@+id/textView" android:layout_gravity="center_horizontal"/>
-</LinearLayout>
+              android:layout_width="match_parent"
+              android:layout_height="match_parent" android:background="#eee8d5">
 
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+            android:id="@+id/stopContainer" android:paddingBottom="25dp">
+        <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+                  android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/stopHeader"
+                  android:layout_gravity="center_horizontal" android:paddingBottom="10dp" android:visibility="visible"
+                  android:text="Randersvej" android:paddingTop="10dp" android:textColor="#fdf6e3"
+                  android:gravity="center" android:background="#2aa198"/>
+    </LinearLayout>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/enRouteContainer"
+            android:paddingBottom="25dp">
+        <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/routeHeader" android:layout_gravity="center_horizontal" android:paddingBottom="10dp"
+                android:visibility="visible" android:text="5A for Tangkrogen" android:paddingTop="10dp"
+                android:textColor="#fdf6e3" android:gravity="center" android:background="#dc322f"
+        />
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/nextStopIsLabel"
+                android:id="@+id/nextStopIsLabel" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
+                android:paddingBottom="5dp"/>
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Silkeborgvej"
+                android:id="@+id/nextStop" android:layout_gravity="center_horizontal"/>
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:id="@+id/distanceToNextStop" android:layout_gravity="center_horizontal" android:textSize="36dp"
+                android:paddingTop="10dp" android:paddingBottom="10dp" android:visibility="visible"
+                android:text="150 m"/>
+    </LinearLayout>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/learningContainer"
+            android:paddingBottom="25dp">
+        <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="Traffic"
+                android:id="@+id/trafficHeader" android:layout_gravity="center_horizontal" android:paddingTop="10dp"
+                android:paddingBottom="10dp" android:gravity="center_vertical|center_horizontal"
+                android:background="#d33682" android:textColor="#fdf6e3"/>
+        <Spinner
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/trafficLevel" android:spinnerMode="dialog"
+                android:clickable="true" android:entries="@array/trafficLevels" android:gravity="center_horizontal"
+                android:visibility="visible"/>
+    </LinearLayout>
+</LinearLayout>

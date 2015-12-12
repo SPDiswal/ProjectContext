@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/locatingProgressAction"
+          android:title="@string/actionLocatingProgress"
+          android:showAsAction="ifRoom"/>
+    <item android:id="@+id/goAction"
+          android:title="@string/actionGo"
+          android:showAsAction="ifRoom"/>
+    <item android:id="@+id/overrideNextAction"
+          android:title="@string/actionOverrideNext"
+          android:showAsAction="ifRoom"/>
+</menu>
