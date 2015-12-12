@@ -10,7 +10,7 @@ import java.util.*;
 public class DeparturesTask extends AsyncTask<Object, Void, List<Departure>>
 {
     // Via our own proxy-service on DigitalOcean that transforms the XML from Rejseplanen to JSON.
-    private static final String REJSEPLANEN_DEPARTURES = "http://178.62.241.8:3000/departures/";
+    private static final String REJSEPLANEN_DEPARTURES = "http://178.62.241.8:3000/departures";
 
     private final DeparturesTaskListener listener;
     private final Map<String, Route> routes;

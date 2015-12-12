@@ -4,14 +4,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.location.*;
 import android.os.*;
+import android.os.Environment;
 import android.view.*;
 import android.widget.*;
 import dk.au.ProjectContext.R;
+import dk.au.ProjectContext.external.classifiers.ClassifierTask;
 import dk.au.ProjectContext.external.rejseplanen.*;
 import dk.au.ProjectContext.external.weather.*;
 import dk.au.ProjectContext.location.StandardLocationListener;
-import dk.au.ProjectContext.models.Modeller;
-import weka.core.Instances;
+import dk.au.ProjectContext.modelling.Modeller;
+import weka.classifiers.Classifier;
+import weka.core.*;
 import weka.core.converters.*;
 
 import java.io.*;
@@ -22,7 +25,8 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
                                                       JourneyTask.JourneyTaskListener,
                                                       WeatherTask.WeatherTaskListener,
                                                       StandardLocationListener.LocationChangedListener,
-                                                      Modeller.ModelFinishedListener
+                                                      Modeller.ModelFinishedListener,
+                                                      ClassifierTask.ModelTaskListener
 {
     private File outputPath = new File(Environment.getExternalStorageDirectory() + "/AU-ContextAwareness");
 
@@ -30,8 +34,6 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     private Set<Route> routes;
     private Set<Stop> stops;
-
-    private Set<Journey> journeys;
 
     private MenuItem locatingProgressAction;
     private MenuItem goAction;
@@ -42,14 +44,12 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     private long overrideNextStartTime;
 
     private Location currentLocation;
-    private Stop nearestStop;
-
     private Journey currentJourney;
-
     private Route currentRoute;
     private Stop nextStop;
 
     private Modeller modeller;
+    private Classifier classifier;
 
     public void retrieveRoutes(final List<Route> routes)
     {
@@ -115,10 +115,15 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         }
     }
 
-    public void retrieveModel(final Stop stop, final Instances instances)
+    public void retrieveInstances(final Stop stop, final Instances instances)
     {
         saveModel(stop, instances);
         goToNextStop();
+    }
+
+    public void retrieveClassifier(final Classifier classifier)
+    {
+        this.classifier = classifier;
     }
 
     @Override
@@ -182,16 +187,6 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         }
     }
 
-    private void hideAllActions()
-    {
-        if (actionsAvailable)
-        {
-            locatingProgressAction.setVisible(false);
-            goAction.setVisible(false);
-            overrideNextAction.setVisible(false);
-        }
-    }
-
     private void updateNearbyStop()
     {
         Stop nearbyStop = getNearbyStop(currentLocation);
@@ -206,6 +201,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         fiveMinutesAgo.add(Calendar.MINUTE, -5);
 
         new DeparturesTask(this, routes).execute(currentRoute.first(), fiveMinutesAgo.getTime());
+        new ClassifierTask(this).execute(currentRoute.getId(), currentRoute.last().getId());
     }
 
     private Stop getNearbyStop(final Location location)
@@ -343,14 +339,39 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             int finalStopArrivalTimeMinutes = (int) Math.floor((finalStopArrivalTimeSecondsSinceMidnight % 3600) / 60);
 
             String finalStopArrivalTime = finalStopArrivalTimeHours + ":" + finalStopArrivalTimeMinutes;
+            String predictedTimeDelay = predictDelay(distanceToFinalStop, finalStopArrivalTimeSecondsSinceMidnight);
 
             ((TextView) findViewById(R.id.finalStopHeader)).setText(finalStopName);
             ((TextView) findViewById(R.id.finalStopArrivalTime)).setText(finalStopArrivalTime);
-            ((TextView) findViewById(R.id.finalStopDelay)).setText(/* TODO Compute by WEKA */);
+            ((TextView) findViewById(R.id.finalStopDelay)).setText(predictedTimeDelay);
             ((TextView) findViewById(R.id.distanceToFinalStop)).setText(distanceToFinalStop + " m");
 
             findViewById(R.id.enRouteContainer).setVisibility(View.VISIBLE);
             findViewById(R.id.trafficContainer).setVisibility(View.VISIBLE);
+        }
+    }
+
+    private String predictDelay(final int distance, final int scheduledArrivalTime)
+    {
+        if (modeller == null || classifier == null) return "OnTime";
+
+        try
+        {
+            Date today = Calendar.getInstance().getTime();
+            int timeOfDay = modeller.convertToSecondsSinceMidnight(today);
+
+            Calendar c = Calendar.getInstance();
+            c.setTime(today);
+            int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
+
+            Instance i = modeller.createInstance(distance, timeOfDay, dayOfWeek, scheduledArrivalTime, trafficLevel);
+            double classIndex = classifier.classifyInstance(i);
+
+            return modeller.createRelation("Prediction").classAttribute().value((int) classIndex);
+        }
+        catch (Exception e)
+        {
+            return "OnTime";
         }
     }
 

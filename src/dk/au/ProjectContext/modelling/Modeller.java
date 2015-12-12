@@ -1,4 +1,4 @@
-package dk.au.ProjectContext.models;
+package dk.au.ProjectContext.modelling;
 
 import android.location.Location;
 import dk.au.ProjectContext.external.rejseplanen.*;
@@ -13,16 +13,20 @@ public class Modeller
     public static final String ON_TIME_CLASS = "OnTime";
     public static final String EARLY_BY_CLASS = "EarlyBy";
     public static final String LATE_BY_CLASS = "LateBy";
-    public static final int NUMBER_OF_FEATURES = 11;
     public static final String DELAY_OUT_OF_SCOPE = "300Plus";
+    public static final int NUMBER_OF_FEATURES = 11;
+
     private final ModelFinishedListener listener;
+
     private final Journey journey;
     private final Weather weather;
     private final Route route;
+
     private final int locationSampleTime;
     private final int nearbyStopDistanceThreshold;
 
     private final Map<Stop, List<Sample>> models = new HashMap<Stop, List<Sample>>();
+
     private FastVector features;
     private Attribute distanceAttribute;
     private Attribute timeOfDayAttribute;
@@ -129,21 +133,21 @@ public class Modeller
         aggregateSamplesToAverages(stopToSkip);
         Instances instances = createInstancesFromSamples(stopToSkip);
 
-        listener.retrieveModel(stopToSkip, instances);
+        listener.retrieveInstances(stopToSkip, instances);
     }
 
     private Instances createInstancesFromSamples(final Stop stop)
     {
-        int scheduledTimeOfArrivalSecondsSinceMidnight = journey.getTimetable().get(stop);
+        int scheduledArrivalTime = journey.getTimetable().get(stop);
         List<Sample> samples = models.get(stop);
 
-        Instances instances = new Instances("Schedule", features, 0);
+        Instances instances = createRelation("Schedule");
 
         Sample firstSample = samples.get(0);
         Sample lastSample = samples.get(samples.size() - 1);
 
-        int actualTimeOfArrivalSecondsSinceMidnight = convertToSecondsSinceMidnight(lastSample.getTime());
-        int timeDelay = actualTimeOfArrivalSecondsSinceMidnight - scheduledTimeOfArrivalSecondsSinceMidnight;
+        int actualArrivalTime = convertToSecondsSinceMidnight(lastSample.getTime());
+        int timeDelay = actualArrivalTime - scheduledArrivalTime;
 
         Calendar c = Calendar.getInstance();
         c.setTime(firstSample.getTime());
@@ -174,19 +178,12 @@ public class Modeller
 
         for (Sample sample : samples)
         {
-            Instance instance = new Instance(NUMBER_OF_FEATURES);
+            int timeOfDay = convertToSecondsSinceMidnight(sample.getTime());
+            int traffic = sample.getTraffic();
+            int distance = sample.getDistance();
 
-            instance.setValue(distanceAttribute, sample.getDistance());
-            instance.setValue(timeOfDayAttribute, convertToSecondsSinceMidnight(sample.getTime()));
-            instance.setValue(dayOfWeekAttribute, dayOfWeek);
-            instance.setValue(scheduledTimeOfArrivalAttribute, scheduledTimeOfArrivalSecondsSinceMidnight);
-            instance.setValue(weatherAttribute, weather.getConditions());
-            instance.setValue(temperatureAttribute, weather.getTemperature());
-            instance.setValue(windSpeedAttribute, weather.getWindSpeed());
-            instance.setValue(windDirectionAttribute, weather.getWindDirection());
-            instance.setValue(precipitationAttribute, weather.getPrecipitation());
-            instance.setValue(trafficAttribute, sample.getTraffic());
-            instance.setValue(predictedTimeDelayAttribute, delay);
+            Instance instance = createInstance(distance, timeOfDay, dayOfWeek, scheduledArrivalTime, traffic);
+            instance.setClassValue(/*predictedTimeDelayAttribute, */delay);
 
             instances.add(instance);
         }
@@ -194,7 +191,37 @@ public class Modeller
         return instances;
     }
 
-    private int convertToSecondsSinceMidnight(final Date time)
+    public Instances createRelation(final String name)
+    {
+        Instances instances = new Instances(name, features, 0);
+        instances.setClassIndex(instances.numAttributes() - 1);
+        return instances;
+    }
+
+    public Instance createInstance(final int distance,
+                                   final int timeOfDay,
+                                   final int dayOfWeek,
+                                   final int scheduledTimeOfArrival,
+                                   final int trafficLevel)
+    {
+        Instance instance = new Instance(NUMBER_OF_FEATURES);
+
+        instance.setValue(distanceAttribute, distance);
+        instance.setValue(timeOfDayAttribute, timeOfDay);
+        instance.setValue(dayOfWeekAttribute, dayOfWeek);
+        instance.setValue(scheduledTimeOfArrivalAttribute, scheduledTimeOfArrival);
+        instance.setValue(weatherAttribute, weather.getConditions());
+        instance.setValue(temperatureAttribute, weather.getTemperature());
+        instance.setValue(windSpeedAttribute, weather.getWindSpeed());
+        instance.setValue(windDirectionAttribute, weather.getWindDirection());
+        instance.setValue(precipitationAttribute, weather.getPrecipitation());
+        instance.setValue(trafficAttribute, trafficLevel);
+        instance.setClassMissing();
+
+        return instance;
+    }
+
+    public int convertToSecondsSinceMidnight(final Date time)
     {
         DateFormat formatter = new SimpleDateFormat("HHmmss");
         String timeOfDay = formatter.format(time);
@@ -247,6 +274,6 @@ public class Modeller
 
     public interface ModelFinishedListener
     {
-        void retrieveModel(Stop stop, Instances instances);
+        void retrieveInstances(Stop stop, Instances instances);
     }
 }

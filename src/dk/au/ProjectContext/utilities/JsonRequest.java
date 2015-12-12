@@ -1,13 +1,8 @@
 package dk.au.ProjectContext.utilities;
 
-import org.apache.http.*;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.*;
 
 import java.io.*;
-import java.net.URI;
 
 public class JsonRequest
 {
@@ -20,27 +15,16 @@ public class JsonRequest
 
     public JSONObject get() throws Exception
     {
-        HttpClient httpclient = new DefaultHttpClient();
-        HttpGet request = new HttpGet();
-        request.setURI(URI.create(uri));
-
-        HttpResponse response = httpclient.execute(request);
-
-        if (response.getStatusLine().getStatusCode() == 200)
-        {
-            HttpEntity entity = response.getEntity();
-            return entity != null ? getJson(entity) : null;
-        }
-
-        return null;
+        InputStream response = new HttpRequest(uri).get();
+        return response != null ? getJson(response) : null;
     }
 
-    private JSONObject getJson(final HttpEntity response) throws IOException, JSONException
+    private JSONObject getJson(final InputStream contents) throws IOException, JSONException
     {
         String line;
         StringBuilder builder = new StringBuilder();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent(), "UTF-8"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(contents, "UTF-8"));
 
         while ((line = reader.readLine()) != null)
         {

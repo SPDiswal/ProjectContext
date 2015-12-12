@@ -1,4 +1,4 @@
-package dk.au.ProjectContext.models;
+package dk.au.ProjectContext.modelling;
 
 import java.util.*;
 

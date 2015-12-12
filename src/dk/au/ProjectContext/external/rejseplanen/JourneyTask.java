@@ -9,7 +9,7 @@ import java.util.*;
 public class JourneyTask extends AsyncTask<String, Void, Journey>
 {
     // Via our own proxy-service on DigitalOcean that transforms the XML from Rejseplanen to JSON.
-    private static final String REJSEPLANEN_JOURNEYS = "http://178.62.241.8:3000/journeys/";
+    private static final String REJSEPLANEN_JOURNEYS = "http://178.62.241.8:3000/journeys";
 
     private final JourneyTaskListener listener;
     private final Route route;
