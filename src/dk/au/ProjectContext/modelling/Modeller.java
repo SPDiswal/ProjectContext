@@ -82,7 +82,7 @@ public class Modeller
         features.addElement(scheduledTimeOfArrivalAttribute);
 
         // Weather: String.
-        weatherAttribute = new Attribute("weather");
+        weatherAttribute = new Attribute("weather", (FastVector) null);
         features.addElement(weatherAttribute);
 
         // Temperature: Numeric (degrees Celsius).
@@ -183,7 +183,7 @@ public class Modeller
             int distance = sample.getDistance();
 
             Instance instance = createInstance(distance, timeOfDay, dayOfWeek, scheduledArrivalTime, traffic);
-            instance.setClassValue(/*predictedTimeDelayAttribute, */delay);
+            instance.setValue(predictedTimeDelayAttribute, delay);
 
             instances.add(instance);
         }
@@ -216,7 +216,7 @@ public class Modeller
         instance.setValue(windDirectionAttribute, weather.getWindDirection());
         instance.setValue(precipitationAttribute, weather.getPrecipitation());
         instance.setValue(trafficAttribute, trafficLevel);
-        instance.setClassMissing();
+//        instance.setClassMissing();
 
         return instance;
     }

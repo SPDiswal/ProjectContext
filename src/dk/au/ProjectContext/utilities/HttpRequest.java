@@ -22,6 +22,7 @@ public class HttpRequest
         HttpClient httpclient = new DefaultHttpClient();
         HttpGet request = new HttpGet();
         request.setURI(URI.create(uri));
+        request.setHeader("Accept", "application/json");
 
         HttpResponse response = httpclient.execute(request);
 

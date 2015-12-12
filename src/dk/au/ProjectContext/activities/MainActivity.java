@@ -82,8 +82,8 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         final int locationSampleTime = getResources().getInteger(R.integer.locationSampleTime);
         final int nearbyStopDistanceThreshold = getResources().getInteger(R.integer.nearbyStopDistanceThreshold);
 
+        this.modeller = new Modeller(this, journey, weather, locationSampleTime, nearbyStopDistanceThreshold);
         this.currentJourney = journey;
-        this.modeller = new Modeller(this, currentJourney, weather, locationSampleTime, nearbyStopDistanceThreshold);
         this.nextStop = currentRoute.first();
 
         updateDisplay();
@@ -99,9 +99,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     {
         this.currentLocation = location;
 
-        updateNearbyStop();
-
-        if (modeller != null)
+        if (currentJourney != null)
         {
             updateDisplay();
             showAction(overrideNextAction);
@@ -113,6 +111,8 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             clearDisplay();
             showAction(goAction);
         }
+
+        if (routes != null) updateNearbyStop();
     }
 
     public void retrieveInstances(final Stop stop, final Instances instances)
@@ -263,7 +263,8 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     private void whenFinished()
     {
-        currentRoute = null;
+        currentJourney = null;
+
         new WeatherTask(this).execute();
 
         clearDisplay();
@@ -272,7 +273,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     private void saveModel(final Stop stop, final Instances instances)
     {
-        String fileName = currentRoute.getId() + "-" + stop.getId() + ".arff";
+        String fileName = currentRoute.getId() + "-" + stop.getId() + "-" + stop.getName() + ".arff";
         File file = new File(outputPath, fileName);
 
         Instances instancesToSave;

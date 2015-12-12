@@ -10,7 +10,7 @@ import java.io.*;
 public class ClassifierTask extends AsyncTask<String, Void, Classifier>
 {
     // Via our own service on DigitalOcean.
-    private static final String MODEL_SERVICE = "http://178.62.241.8:3000/models";
+    private static final String MODEL_SERVICE = "http://178.62.241.8:3000/classifiers";
 
     private final ModelTaskListener listener;
 
