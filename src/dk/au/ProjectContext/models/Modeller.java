@@ -4,10 +4,16 @@ import android.location.Location;
 import dk.au.ProjectContext.external.rejseplanen.*;
 import weka.core.*;
 
+import java.text.*;
 import java.util.*;
 
 public class Modeller
 {
+    public static final String ON_TIME_CLASS = "OnTime";
+    public static final String EARLY_BY_CLASS = "EarlyBy";
+    public static final String LATE_BY_CLASS = "LateBy";
+    public static final int NUMBER_OF_FEATURES = 11;
+    public static final String DELAY_OUT_OF_SCOPE = "300Plus";
     private final ModelFinishedListener listener;
     private final Journey journey;
     private final Route route;
@@ -16,6 +22,19 @@ public class Modeller
 
     private final Map<Stop, List<Sample>> models = new HashMap<Stop, List<Sample>>();
     private FastVector features;
+    private Attribute distanceAttribute;
+    private Attribute timeOfDayAttribute;
+    private FastVector daysOfTheWeek;
+    private Attribute dayOfWeekAttribute;
+    private Attribute scheduledTimeOfArrivalAttribute;
+    private Attribute weatherAttribute;
+    private Attribute temperatureAttribute;
+    private Attribute windSpeedAttribute;
+    private Attribute windDirectionAttribute;
+    private Attribute precipitationAttribute;
+    private Attribute trafficAttribute;
+    private FastVector delays;
+    private Attribute delayAttribute;
 
     public Modeller(final ModelFinishedListener listener,
                     final Journey journey,
@@ -38,18 +57,18 @@ public class Modeller
 
     private void initialiseAttributes()
     {
-        features = new FastVector(11);
+        features = new FastVector(NUMBER_OF_FEATURES);
 
         // Distance: Numeric (metres).
-        Attribute distanceAttribute = new Attribute("distance");
+        distanceAttribute = new Attribute("distance");
         features.addElement(distanceAttribute);
 
         // Time of day: Numeric (seconds since midnight).
-        Attribute timeOfDayAttribute = new Attribute("timeOfDay");
+        timeOfDayAttribute = new Attribute("timeOfDay");
         features.addElement(timeOfDayAttribute);
 
         // Day of week: Nominal.
-        FastVector daysOfTheWeek = new FastVector(7);
+        daysOfTheWeek = new FastVector(7);
         daysOfTheWeek.addElement("Monday");
         daysOfTheWeek.addElement("Tuesday");
         daysOfTheWeek.addElement("Wednesday");
@@ -58,48 +77,51 @@ public class Modeller
         daysOfTheWeek.addElement("Saturday");
         daysOfTheWeek.addElement("Sunday");
 
-        Attribute dayOfWeekAttribute = new Attribute("dayOfWeek", daysOfTheWeek);
+        dayOfWeekAttribute = new Attribute("dayOfWeek", daysOfTheWeek);
         features.addElement(dayOfWeekAttribute);
 
         // Scheduled time of arrival: Numeric (seconds since midnight).
-        Attribute scheduledTimeOfArrivalAttribute = new Attribute("scheduledTimeOfArrival");
+        scheduledTimeOfArrivalAttribute = new Attribute("scheduledTimeOfArrival");
         features.addElement(scheduledTimeOfArrivalAttribute);
 
         // Weather: String.
-        Attribute weatherAttribute = new Attribute("weather");
+        weatherAttribute = new Attribute("weather");
         features.addElement(weatherAttribute);
 
         // Temperature: Numeric (degrees Celsius).
-        Attribute temperatureAttribute = new Attribute("temperature");
+        temperatureAttribute = new Attribute("temperature");
         features.addElement(temperatureAttribute);
 
         // Wind speed: Numeric (metres per second).
-        Attribute windSpeedAttribute = new Attribute("windSpeed");
+        windSpeedAttribute = new Attribute("windSpeed");
         features.addElement(windSpeedAttribute);
 
-        // Wind direction: Numeric (degrees).
-        Attribute windDirectionAttribute = new Attribute("windDirection");
+        // Wind direction: Numeric (degrees of direction).
+        windDirectionAttribute = new Attribute("windDirection");
         features.addElement(windDirectionAttribute);
 
         // Precipitation: Numeric (millimetres).
-        Attribute precipitationAttribute = new Attribute("precipitation");
+        precipitationAttribute = new Attribute("precipitation");
         features.addElement(precipitationAttribute);
 
         // Traffic level: Numeric (level 0 to 4).
-        Attribute trafficAttribute = new Attribute("traffic");
+        trafficAttribute = new Attribute("traffic");
         features.addElement(trafficAttribute);
 
         // Predicted time delay (class): Nominal (seconds of delay).
-        FastVector delays = new FastVector(8);
-        delays.addElement("OnTime");
+        delays = new FastVector(2 * 20 + 3);
+        delays.addElement(ON_TIME_CLASS);
 
-        for (int i = 15; i < 300; i += 15)
+        for (int i = 15; i <= 300; i += 15)
         {
-            delays.addElement("EarlyBy" + i);
-            delays.addElement("LateBy" + i);
+            delays.addElement(EARLY_BY_CLASS + i);
+            delays.addElement(LATE_BY_CLASS + i);
         }
 
-        Attribute delayAttribute = new Attribute("delay", delays);
+        delays.addElement(EARLY_BY_CLASS + DELAY_OUT_OF_SCOPE);
+        delays.addElement(LATE_BY_CLASS + DELAY_OUT_OF_SCOPE);
+
+        delayAttribute = new Attribute("delay", delays);
         features.addElement(delayAttribute);
     }
 
@@ -119,15 +141,76 @@ public class Modeller
 
     private Instances createInstancesFromSamples(final Stop stop)
     {
+        int scheduledTimeOfArrivalSecondsSinceMidnight = journey.getTimetable().get(stop);
         List<Sample> samples = models.get(stop);
 
         Instances instances = new Instances("Schedule", features, 0);
 
+        int actualTimeOfArrivalSecondsSinceMidnight = getActualTimeOfArrival(samples.get(samples.size() - 1));
+        int timeDelay = actualTimeOfArrivalSecondsSinceMidnight - scheduledTimeOfArrivalSecondsSinceMidnight;
 
+        String delay;
 
-        // TODO: Fetch timetables (departures + journeys) from Rejseplanen, either here or in the activity.
+        if (timeDelay >= -14 && timeDelay <= 14)
+        {
+            delay = ON_TIME_CLASS;
+        }
+
+        for (int i = 15; i <= 300; i += 15)
+        {
+            if (timeDelay >= i && timeDelay <= i + 14)
+            {
+                delay = LATE_BY_CLASS + i;
+            }
+            else if (timeDelay >= -i - 14 && timeDelay <= -i)
+            {
+                delay = EARLY_BY_CLASS + i;
+            }
+        }
+
+        if (timeDelay > 300)
+        {
+            delay = LATE_BY_CLASS + DELAY_OUT_OF_SCOPE;
+        }
+        else if (timeDelay < -300)
+        {
+            delay = EARLY_BY_CLASS + DELAY_OUT_OF_SCOPE;
+        }
+
+        for (Sample sample : samples)
+        {
+            Instance instance = new Instance(NUMBER_OF_FEATURES);
+
+            instance.setValue(distanceAttribute, sample.getDistance());
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+            instance.setValue();
+
+            instances.add(instance);
+        }
 
         return instances;
+    }
+
+    private int getActualTimeOfArrival(final Sample lastSample)
+    {
+        Date actualTimeOfArrival = lastSample.getTime();
+
+        DateFormat formatter = new SimpleDateFormat("HHmmss");
+        String timeOfDay = formatter.format(actualTimeOfArrival);
+
+        int hours = Integer.parseInt(timeOfDay.substring(0, 2));
+        int minutes = Integer.parseInt(timeOfDay.substring(2, 4));
+        int seconds = Integer.parseInt(timeOfDay.substring(4, 6));
+
+        return hours * 3600 + minutes * 60 + seconds;
     }
 
     private void addSampleToModels(final Stop nextStop, final Location location, final int trafficLevel)

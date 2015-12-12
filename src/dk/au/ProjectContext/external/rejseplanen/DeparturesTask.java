@@ -15,7 +15,7 @@ public class DeparturesTask extends AsyncTask<Object, Void, List<Departure>>
     private final DeparturesTaskListener listener;
     private final Map<String, Route> routes;
 
-    public DeparturesTask(final DeparturesTaskListener listener, final List<Route> routes)
+    public DeparturesTask(final DeparturesTaskListener listener, final Set<Route> routes)
     {
         this.listener = listener;
         this.routes = new HashMap<String, Route>();
@@ -61,6 +61,7 @@ public class DeparturesTask extends AsyncTask<Object, Void, List<Departure>>
     {
         String routeId = departure.getString("routeId");
         String[] timeOfDayTokens = departure.getString("time").split(":");
+        String journeyId = departure.getString("journeyId");
 
         Route route = routes.get(routeId);
 
@@ -68,7 +69,7 @@ public class DeparturesTask extends AsyncTask<Object, Void, List<Departure>>
         int minutes = Integer.parseInt(timeOfDayTokens[1]);
         int timeOfDay = hours * 3600 + minutes * 60;
 
-        return new Departure(route, timeOfDay);
+        return new Departure(route, timeOfDay, journeyId);
     }
 
     @Override

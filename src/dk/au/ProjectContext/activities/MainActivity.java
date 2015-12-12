@@ -19,6 +19,7 @@ import java.util.*;
 
 public class MainActivity extends Activity implements RoutesTask.RoutesTaskListener,
                                                       DeparturesTask.DeparturesTaskListener,
+                                                      JourneyTask.JourneyTaskListener,
                                                       WeatherTask.WeatherTaskListener,
                                                       StandardLocationListener.LocationChangedListener,
                                                       Modeller.ModelFinishedListener
@@ -44,6 +45,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     private Stop nearestStop;
 
     private Journey currentJourney;
+
     private Route currentRoute;
     private Stop nextStop;
 
@@ -59,17 +61,33 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         for (Route route : routes)
         {
             stops.addAll(route.getStops());
-
-            Calendar fiveMinutesAgo = Calendar.getInstance();
-            fiveMinutesAgo.add(Calendar.MINUTE, -5);
-
-            new DeparturesTask(this, routes).execute(route.first(), fiveMinutesAgo.getTime());
         }
     }
 
     public void retrieveDepartures(final List<Departure> departures)
     {
+        for (Departure departure : departures)
+        {
+            if (departure.getRoute() == currentRoute)
+            {
+                String journeyId = departure.getJourneyId();
+                new JourneyTask(this, departure.getRoute()).execute(journeyId);
+                break;
+            }
+        }
+    }
 
+    public void retrieveJourney(final Journey journey)
+    {
+        final int locationSampleTime = getResources().getInteger(R.integer.locationSampleTime);
+        final int nearbyStopDistanceThreshold = getResources().getInteger(R.integer.nearbyStopDistanceThreshold);
+
+        this.currentJourney = journey;
+        this.modeller = new Modeller(this, currentJourney, locationSampleTime, nearbyStopDistanceThreshold);
+        this.nextStop = currentRoute.first();
+
+        updateDisplay();
+        showAction(overrideNextAction);
     }
 
     public void retrieveWeather(final Weather weather)
@@ -79,11 +97,11 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     public void retrieveLocation(final Location location)
     {
-        currentLocation = location;
+        this.currentLocation = location;
 
-        updateNearestStop();
+        updateNearbyStop();
 
-        if (currentRoute != null)
+        if (modeller != null)
         {
             updateDisplay();
             showAction(overrideNextAction);
@@ -174,31 +192,26 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         }
     }
 
-    private void updateNearestStop()
+    private void updateNearbyStop()
     {
-        Stop nearestStop = getNearestStop(currentLocation);
-        setTitle(nearestStop.getName());
+        Stop nearbyStop = getNearbyStop(currentLocation);
+        setTitle(nearbyStop != null ? nearbyStop.getName() : "");
     }
 
     private void go()
     {
-        final int locationSampleTime = getResources().getInteger(R.integer.locationSampleTime);
-        final int nearbyStopDistanceThreshold = getResources().getInteger(R.integer.nearbyStopDistanceThreshold);
+        currentRoute = getNearestRoute();
 
-        if (currentLocation != null)
-        {
-            currentRoute = getNearestRoute();
-            modeller = new Modeller(this, currentRoute, locationSampleTime, nearbyStopDistanceThreshold);
+        Calendar fiveMinutesAgo = Calendar.getInstance();
+        fiveMinutesAgo.add(Calendar.MINUTE, -5);
 
-            nextStop = currentRoute.first();
-
-            updateDisplay();
-            showAction(overrideNextAction);
-        }
+        new DeparturesTask(this, routes).execute(currentRoute.first(), fiveMinutesAgo.getTime());
     }
 
-    private Stop getNearestStop(final Location location)
+    private Stop getNearbyStop(final Location location)
     {
+        final int nearbyStopDistanceThreshold = getResources().getInteger(R.integer.nearbyStopDistanceThreshold);
+
         Stop nearestStopSoFar = null;
         int smallestDistanceSoFar = Integer.MAX_VALUE;
 
@@ -207,7 +220,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             Location locationOfStop = stop.getLocation();
             int distanceToStop = (int) Math.ceil(location.distanceTo(locationOfStop));
 
-            if (distanceToStop < smallestDistanceSoFar)
+            if (distanceToStop < smallestDistanceSoFar && distanceToStop < nearbyStopDistanceThreshold)
             {
                 smallestDistanceSoFar = distanceToStop;
                 nearestStopSoFar = stop;
@@ -219,7 +232,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     private Route getNearestRoute()
     {
-        Route nearestRouteSoFar = routes.get(0);
+        Route nearestRouteSoFar = null;
         int smallestDistanceSoFar = Integer.MAX_VALUE;
 
         for (Route route : routes)
@@ -233,6 +246,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
                 nearestRouteSoFar = route;
             }
         }
+
         return nearestRouteSoFar;
     }
 
@@ -311,38 +325,43 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     private void updateDisplay()
     {
-        if (currentRoute != null)
+        if (currentJourney != null)
         {
+            Stop finalStop = currentRoute.last();
+
             int distanceToNextStop = currentRoute.distanceTo(currentLocation, nextStop);
             int distanceToFinalStop = currentRoute.distanceTo(currentLocation, nextStop)
-                                      + currentRoute.distanceBetween(nextStop, currentRoute.last());
+                                      + currentRoute.distanceBetween(nextStop, finalStop);
 
             String route = currentRoute.getName() + " for " + currentRoute.getDirection();
-            String finalStop = currentRoute.last().getName();
+            String nextStopName = nextStop.getName();
 
-            setTitle(nextStop.getName());
+            ((TextView) findViewById(R.id.routeHeader)).setText(route);
+            ((TextView) findViewById(R.id.nextStop)).setText(nextStopName);
+            ((TextView) findViewById(R.id.distanceToNextStop)).setText(distanceToNextStop + " m");
 
-            ((TextView) findViewById(R.id.distance)).setText(distanceToNextStop + " m");
-            ((TextView) findViewById(R.id.route)).setText(route);
-            ((TextView) findViewById(R.id.distanceToFinalStop)).setText(distanceToFinalStop + " m to " + finalStop);
+            String finalStopName = finalStop.getName();
+            int finalStopArrivalTimeSecondsSinceMidnight = currentJourney.getTimetable().get(finalStop);
 
-            findViewById(R.id.distance).setVisibility(View.VISIBLE);
-            findViewById(R.id.route).setVisibility(View.VISIBLE);
-            findViewById(R.id.distanceToFinalStop).setVisibility(View.VISIBLE);
+            int finalStopArrivalTimeHours = (int) Math.floor(finalStopArrivalTimeSecondsSinceMidnight / 3600);
+            int finalStopArrivalTimeMinutes = (int) Math.floor((finalStopArrivalTimeSecondsSinceMidnight % 3600) / 60);
+
+            String finalStopArrivalTime = finalStopArrivalTimeHours + ":" + finalStopArrivalTimeMinutes;
+
+            ((TextView) findViewById(R.id.finalStopHeader)).setText(finalStopName);
+            ((TextView) findViewById(R.id.finalStopArrivalTime)).setText(finalStopArrivalTime);
+            ((TextView) findViewById(R.id.finalStopDelay)).setText(/* TODO Compute by WEKA */);
+            ((TextView) findViewById(R.id.distanceToFinalStop)).setText(distanceToFinalStop + " m");
+
+            findViewById(R.id.enRouteContainer).setVisibility(View.VISIBLE);
+            findViewById(R.id.trafficContainer).setVisibility(View.VISIBLE);
         }
     }
 
     private void clearDisplay()
     {
-        setTitle(getString(R.string.ready));
-
-        ((TextView) findViewById(R.id.distance)).setText("");
-        ((TextView) findViewById(R.id.route)).setText("");
-        ((TextView) findViewById(R.id.distanceToFinalStop)).setText("");
-
-        findViewById(R.id.distance).setVisibility(View.GONE);
-        findViewById(R.id.route).setVisibility(View.GONE);
-        findViewById(R.id.distanceToFinalStop).setVisibility(View.GONE);
+        findViewById(R.id.enRouteContainer).setVisibility(View.GONE);
+        findViewById(R.id.trafficContainer).setVisibility(View.GONE);
     }
 
     private void overrideNext()

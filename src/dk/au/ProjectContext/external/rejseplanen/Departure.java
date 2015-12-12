@@ -4,11 +4,13 @@ public class Departure
 {
     private Route route;
     private int timeOfDay;
+    private String journeyId;
 
-    public Departure(final Route route, final int timeOfDay)
+    public Departure(final Route route, final int timeOfDay, final String journeyId)
     {
         this.route = route;
         this.timeOfDay = timeOfDay;
+        this.journeyId = journeyId;
     }
 
     public Route getRoute()
@@ -19,5 +21,10 @@ public class Departure
     public int getTimeOfDay()
     {
         return timeOfDay;
+    }
+
+    public String getJourneyId()
+    {
+        return journeyId;
     }
 }

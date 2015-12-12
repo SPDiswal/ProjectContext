@@ -7,17 +7,6 @@
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
-            android:id="@+id/stopContainer" android:paddingBottom="25dp">
-        <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-                  android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/stopHeader"
-                  android:layout_gravity="center_horizontal" android:paddingBottom="10dp" android:visibility="visible"
-                  android:text="Randersvej" android:paddingTop="10dp" android:textColor="#fdf6e3"
-                  android:gravity="center" android:background="#2aa198"/>
-    </LinearLayout>
-    <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
             android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/enRouteContainer"
             android:paddingBottom="25dp">
         <TextView
@@ -46,13 +35,39 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:id="@+id/distanceToNextStop" android:layout_gravity="center_horizontal" android:textSize="36dp"
-                android:paddingTop="10dp" android:paddingBottom="10dp" android:visibility="visible"
-                android:text="150 m"/>
+                android:paddingTop="10dp" android:visibility="visible"
+                android:text="150 m" android:paddingBottom="25dp"/>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+                android:id="@+id/stopContainer" android:paddingBottom="0dp">
+            <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+                      android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/finalStopHeader"
+                      android:layout_gravity="center_horizontal" android:paddingBottom="10dp" android:visibility="visible"
+                      android:text="Randersvej" android:paddingTop="10dp" android:textColor="#fdf6e3"
+                      android:gravity="center" android:background="#2aa198"/>
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="14:36"
+                    android:id="@+id/finalStopArrivalTime" android:layout_gravity="center_horizontal" android:paddingTop="10dp"/>
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="15 sec early"
+                    android:id="@+id/finalStopDelay" android:layout_gravity="center_horizontal" android:paddingTop="5dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                      android:textAppearance="?android:attr/textAppearanceLarge" android:text="2000 m"
+                      android:id="@+id/distanceToFinalStop" android:layout_gravity="center_horizontal" android:paddingTop="15dp"/>
+        </LinearLayout>
     </LinearLayout>
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/learningContainer"
+            android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/trafficContainer"
             android:paddingBottom="25dp">
         <TextView
                 android:layout_width="fill_parent"
