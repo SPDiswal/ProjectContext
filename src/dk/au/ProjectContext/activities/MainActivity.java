@@ -83,7 +83,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         final int nearbyStopDistanceThreshold = getResources().getInteger(R.integer.nearbyStopDistanceThreshold);
 
         this.currentJourney = journey;
-        this.modeller = new Modeller(this, currentJourney, locationSampleTime, nearbyStopDistanceThreshold);
+        this.modeller = new Modeller(this, currentJourney, weather, locationSampleTime, nearbyStopDistanceThreshold);
         this.nextStop = currentRoute.first();
 
         updateDisplay();
@@ -311,10 +311,6 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
                 e.printStackTrace();
             }
         }
-
-        //        DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss");
-        //        Date today = Calendar.getInstance().getTime();
-        //        String timeOfDay = formatter.format(today);
     }
 
     private boolean isExternalStorageAvailable()

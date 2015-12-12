@@ -2,6 +2,7 @@ package dk.au.ProjectContext.models;
 
 import android.location.Location;
 import dk.au.ProjectContext.external.rejseplanen.*;
+import dk.au.ProjectContext.external.weather.Weather;
 import weka.core.*;
 
 import java.text.*;
@@ -16,6 +17,7 @@ public class Modeller
     public static final String DELAY_OUT_OF_SCOPE = "300Plus";
     private final ModelFinishedListener listener;
     private final Journey journey;
+    private final Weather weather;
     private final Route route;
     private final int locationSampleTime;
     private final int nearbyStopDistanceThreshold;
@@ -24,7 +26,6 @@ public class Modeller
     private FastVector features;
     private Attribute distanceAttribute;
     private Attribute timeOfDayAttribute;
-    private FastVector daysOfTheWeek;
     private Attribute dayOfWeekAttribute;
     private Attribute scheduledTimeOfArrivalAttribute;
     private Attribute weatherAttribute;
@@ -33,16 +34,17 @@ public class Modeller
     private Attribute windDirectionAttribute;
     private Attribute precipitationAttribute;
     private Attribute trafficAttribute;
-    private FastVector delays;
-    private Attribute delayAttribute;
+    private Attribute predictedTimeDelayAttribute;
 
     public Modeller(final ModelFinishedListener listener,
                     final Journey journey,
+                    final Weather weather,
                     final int locationSampleTime,
                     final int nearbyStopDistanceThreshold)
     {
         this.listener = listener;
         this.journey = journey;
+        this.weather = weather;
         this.route = journey.getRoute();
         this.locationSampleTime = locationSampleTime;
         this.nearbyStopDistanceThreshold = nearbyStopDistanceThreshold;
@@ -67,17 +69,8 @@ public class Modeller
         timeOfDayAttribute = new Attribute("timeOfDay");
         features.addElement(timeOfDayAttribute);
 
-        // Day of week: Nominal.
-        daysOfTheWeek = new FastVector(7);
-        daysOfTheWeek.addElement("Monday");
-        daysOfTheWeek.addElement("Tuesday");
-        daysOfTheWeek.addElement("Wednesday");
-        daysOfTheWeek.addElement("Thursday");
-        daysOfTheWeek.addElement("Friday");
-        daysOfTheWeek.addElement("Saturday");
-        daysOfTheWeek.addElement("Sunday");
-
-        dayOfWeekAttribute = new Attribute("dayOfWeek", daysOfTheWeek);
+        // Day of week: Numeric.
+        dayOfWeekAttribute = new Attribute("dayOfWeek");
         features.addElement(dayOfWeekAttribute);
 
         // Scheduled time of arrival: Numeric (seconds since midnight).
@@ -109,7 +102,7 @@ public class Modeller
         features.addElement(trafficAttribute);
 
         // Predicted time delay (class): Nominal (seconds of delay).
-        delays = new FastVector(2 * 20 + 3);
+        FastVector delays = new FastVector(2 * 20 + 3);
         delays.addElement(ON_TIME_CLASS);
 
         for (int i = 15; i <= 300; i += 15)
@@ -121,8 +114,8 @@ public class Modeller
         delays.addElement(EARLY_BY_CLASS + DELAY_OUT_OF_SCOPE);
         delays.addElement(LATE_BY_CLASS + DELAY_OUT_OF_SCOPE);
 
-        delayAttribute = new Attribute("delay", delays);
-        features.addElement(delayAttribute);
+        predictedTimeDelayAttribute = new Attribute("delay", delays);
+        features.addElement(predictedTimeDelayAttribute);
     }
 
     public void takeSample(final Stop nextStop, final Location location, final int trafficLevel)
@@ -146,15 +139,17 @@ public class Modeller
 
         Instances instances = new Instances("Schedule", features, 0);
 
-        int actualTimeOfArrivalSecondsSinceMidnight = getActualTimeOfArrival(samples.get(samples.size() - 1));
+        Sample firstSample = samples.get(0);
+        Sample lastSample = samples.get(samples.size() - 1);
+
+        int actualTimeOfArrivalSecondsSinceMidnight = convertToSecondsSinceMidnight(lastSample.getTime());
         int timeDelay = actualTimeOfArrivalSecondsSinceMidnight - scheduledTimeOfArrivalSecondsSinceMidnight;
 
-        String delay;
+        Calendar c = Calendar.getInstance();
+        c.setTime(firstSample.getTime());
+        int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
 
-        if (timeDelay >= -14 && timeDelay <= 14)
-        {
-            delay = ON_TIME_CLASS;
-        }
+        String delay = ON_TIME_CLASS;
 
         for (int i = 15; i <= 300; i += 15)
         {
@@ -182,16 +177,16 @@ public class Modeller
             Instance instance = new Instance(NUMBER_OF_FEATURES);
 
             instance.setValue(distanceAttribute, sample.getDistance());
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
-            instance.setValue();
+            instance.setValue(timeOfDayAttribute, convertToSecondsSinceMidnight(sample.getTime()));
+            instance.setValue(dayOfWeekAttribute, dayOfWeek);
+            instance.setValue(scheduledTimeOfArrivalAttribute, scheduledTimeOfArrivalSecondsSinceMidnight);
+            instance.setValue(weatherAttribute, weather.getConditions());
+            instance.setValue(temperatureAttribute, weather.getTemperature());
+            instance.setValue(windSpeedAttribute, weather.getWindSpeed());
+            instance.setValue(windDirectionAttribute, weather.getWindDirection());
+            instance.setValue(precipitationAttribute, weather.getPrecipitation());
+            instance.setValue(trafficAttribute, sample.getTraffic());
+            instance.setValue(predictedTimeDelayAttribute, delay);
 
             instances.add(instance);
         }
@@ -199,12 +194,10 @@ public class Modeller
         return instances;
     }
 
-    private int getActualTimeOfArrival(final Sample lastSample)
+    private int convertToSecondsSinceMidnight(final Date time)
     {
-        Date actualTimeOfArrival = lastSample.getTime();
-
         DateFormat formatter = new SimpleDateFormat("HHmmss");
-        String timeOfDay = formatter.format(actualTimeOfArrival);
+        String timeOfDay = formatter.format(time);
 
         int hours = Integer.parseInt(timeOfDay.substring(0, 2));
         int minutes = Integer.parseInt(timeOfDay.substring(2, 4));

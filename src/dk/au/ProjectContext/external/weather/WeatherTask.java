@@ -43,11 +43,12 @@ public class WeatherTask extends AsyncTask<Void, Void, Weather>
 
         if (json.has("rain"))
         {
-            precipitation = json.getJSONObject("rain").getInt("3h");
+            precipitation += (int) Math.ceil(json.getJSONObject("rain").getInt("3h"));
         }
-        else if (json.has("snow"))
+
+        if (json.has("snow"))
         {
-            precipitation = (int) Math.ceil(json.getJSONObject("snow").getInt("3h") / 10);
+            precipitation += (int) Math.ceil(json.getJSONObject("snow").getInt("3h"));
         }
 
         return new Weather(conditions, temperature, windSpeed, windDirection, precipitation);
