@@ -31,10 +31,10 @@ public class DeparturesTask extends AsyncTask<Object, Void, List<Departure>>
     {
         try
         {
-            String firstStopId = ((Stop) params[0]).getId();
+            String stopId = ((Stop) params[0]).getId();
             String dateTime = new SimpleDateFormat("dd/MM/yy/HH/mm").format((Date) params[1]);
 
-            JSONObject json = new JsonRequest(REJSEPLANEN_DEPARTURES + "/" + firstStopId + "/" + dateTime).get();
+            JSONObject json = new JsonRequest(REJSEPLANEN_DEPARTURES + "/" + stopId + "/" + dateTime).get();
             if (json != null) return parseDepartures(json.getJSONArray("departures"));
         }
         catch (Exception ignored)

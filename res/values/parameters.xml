@@ -2,6 +2,6 @@
 <resources>
     <integer name="overrideNextTimeout">2000 <!-- milliseconds --></integer>
     <integer name="locationSampleTime">2000 <!-- milliseconds --></integer>
-    <integer name="nearbyStopDistanceThreshold">15 <!-- metres --></integer>
+    <integer name="nearbyStopDistanceThreshold">30 <!-- metres --></integer>
     <integer name="trafficLevelFactor">2</integer>
 </resources>

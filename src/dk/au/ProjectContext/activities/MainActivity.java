@@ -48,6 +48,10 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     private Route currentRoute;
     private Stop nextStop;
 
+    private Stop nearbyStop;
+    private int nextDepartureTime;
+    private String nextDepartureDirection;
+
     private Modeller modeller;
     private Classifier classifier;
 
@@ -68,7 +72,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     {
         for (Departure departure : departures)
         {
-            if (departure.getRoute() == currentRoute)
+            if (nearbyStop != null && departure.getRoute().getStops().contains(nearbyStop))
             {
                 String journeyId = departure.getJourneyId();
                 new JourneyTask(this, departure.getRoute()).execute(journeyId);
@@ -79,15 +83,14 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     public void retrieveJourney(final Journey journey)
     {
-        final int locationSampleTime = getResources().getInteger(R.integer.locationSampleTime);
         final int nearbyStopDistanceThreshold = getResources().getInteger(R.integer.nearbyStopDistanceThreshold);
 
-        this.modeller = new Modeller(this, journey, weather, locationSampleTime, nearbyStopDistanceThreshold);
-        this.currentJourney = journey;
-        this.nextStop = currentRoute.first();
-
-        updateDisplay();
-        showAction(overrideNextAction);
+        if (nearbyStop != null)
+        {
+            this.modeller = new Modeller(this, journey, weather, nearbyStopDistanceThreshold);
+            this.currentJourney = journey;
+            this.nextStop = nearbyStop;
+        }
     }
 
     public void retrieveWeather(final Weather weather)
@@ -99,20 +102,10 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     {
         this.currentLocation = location;
 
-        if (currentJourney != null)
-        {
-            updateDisplay();
-            showAction(overrideNextAction);
-
-            modeller.takeSample(nextStop, currentLocation, trafficLevel);
-        }
-        else
-        {
-            clearDisplay();
-            showAction(goAction);
-        }
-
         if (routes != null) updateNearbyStop();
+        updateDisplay();
+
+        if (isEnRoute()) modeller.takeSample(nextStop, currentLocation, trafficLevel);
     }
 
     public void retrieveInstances(final Stop stop, final Instances instances)
@@ -183,25 +176,39 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             locatingProgressAction.setVisible(false);
             goAction.setVisible(false);
             overrideNextAction.setVisible(false);
-            action.setVisible(true);
+            if (action != null) action.setVisible(true);
         }
     }
 
     private void updateNearbyStop()
     {
-        Stop nearbyStop = getNearbyStop(currentLocation);
-        setTitle(nearbyStop != null ? nearbyStop.getName() : "");
-    }
+        Stop nearbyStopCandidate = getNearbyStop(currentLocation);
 
-    private void go()
-    {
-        currentRoute = getNearestRoute();
+        if (nearbyStopCandidate != nearbyStop)
+        {
+            nearbyStop = nearbyStopCandidate;
 
-        Calendar fiveMinutesAgo = Calendar.getInstance();
-        fiveMinutesAgo.add(Calendar.MINUTE, -5);
-
-        new DeparturesTask(this, routes).execute(currentRoute.first(), fiveMinutesAgo.getTime());
-        new ClassifierTask(this).execute(currentRoute.getId(), currentRoute.last().getId());
+            if (nearbyStop != null && !isEnRoute())
+            {
+                Date now = Calendar.getInstance().getTime();
+                new DeparturesTask(new DeparturesTask.DeparturesTaskListener()
+                {
+                    public void retrieveDepartures(final List<Departure> departures)
+                    {
+                        for (Departure departure : departures)
+                        {
+                            if (departure.getRoute().getStops().contains(nearbyStop))
+                            {
+                                nextDepartureTime = departure.getTimeOfDay();
+                                nextDepartureDirection = departure.getRoute().getName()
+                                                         + " for " + departure.getRoute().getDirection();
+                                break;
+                            }
+                        }
+                    }
+                }, routes).execute(nearbyStop, now);
+            }
+        }
     }
 
     private Stop getNearbyStop(final Location location)
@@ -224,6 +231,17 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         }
 
         return nearestStopSoFar;
+    }
+
+    private void go()
+    {
+        currentRoute = getNearestRoute();
+
+        Calendar fiveMinutesAgo = Calendar.getInstance();
+        fiveMinutesAgo.add(Calendar.MINUTE, -5);
+
+        new DeparturesTask(this, routes).execute(currentRoute.first(), fiveMinutesAgo.getTime());
+        new ClassifierTask(this).execute(currentRoute.getId(), currentRoute.last().getId());
     }
 
     private Route getNearestRoute()
@@ -253,7 +271,6 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         if (nextStopCandidate != null)
         {
             nextStop = nextStopCandidate;
-            updateDisplay();
         }
         else
         {
@@ -264,16 +281,12 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
     private void whenFinished()
     {
         currentJourney = null;
-
         new WeatherTask(this).execute();
-
-        clearDisplay();
-        showAction(goAction);
     }
 
     private void saveModel(final Stop stop, final Instances instances)
     {
-        String fileName = currentRoute.getId() + "-" + stop.getId() + "-" + stop.getName() + ".arff";
+        String fileName = currentRoute.getId() + "-" + stop.getId() + ".arff";
         File file = new File(outputPath, fileName);
 
         Instances instancesToSave;
@@ -318,7 +331,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
 
     private void updateDisplay()
     {
-        if (currentJourney != null)
+        if (isEnRoute())
         {
             Stop finalStop = currentRoute.last();
 
@@ -339,7 +352,8 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             int finalStopArrivalTimeHours = (int) Math.floor(finalStopArrivalTimeSecondsSinceMidnight / 3600);
             int finalStopArrivalTimeMinutes = (int) Math.floor((finalStopArrivalTimeSecondsSinceMidnight % 3600) / 60);
 
-            String finalStopArrivalTime = finalStopArrivalTimeHours + ":" + finalStopArrivalTimeMinutes;
+            String finalStopArrivalTime = String.format("%02d", finalStopArrivalTimeHours)
+                                          + ":" + String.format("%02d", finalStopArrivalTimeMinutes);
             String predictedTimeDelay = predictDelay(distanceToFinalStop, finalStopArrivalTimeSecondsSinceMidnight);
 
             ((TextView) findViewById(R.id.finalStopHeader)).setText(finalStopName);
@@ -348,13 +362,44 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             ((TextView) findViewById(R.id.distanceToFinalStop)).setText(distanceToFinalStop + " m");
 
             findViewById(R.id.enRouteContainer).setVisibility(View.VISIBLE);
-            findViewById(R.id.trafficContainer).setVisibility(View.VISIBLE);
+            showAction(overrideNextAction);
+        }
+        else
+        {
+            findViewById(R.id.enRouteContainer).setVisibility(View.GONE);
+        }
+
+        if (nearbyStop != null)
+        {
+            setTitle(nearbyStop.getName());
+
+            if (!isEnRoute())
+            {
+                int nextDepartureTimeHours = (int) Math.floor(nextDepartureTime / 3600);
+                int nextDepartureTimeMinutes = (int) Math.floor((nextDepartureTime % 3600) / 60);
+
+                String nextDepartureTimeFormatted = String.format("%02d", nextDepartureTimeHours)
+                                                    + ":" + String.format("%02d", nextDepartureTimeMinutes);
+
+                ((TextView) findViewById(R.id.nextDepartureTime)).setText(nextDepartureTimeFormatted);
+                ((TextView) findViewById(R.id.nextDepartureDirection)).setText(nextDepartureDirection);
+                findViewById(R.id.timetableContainer).setVisibility(View.VISIBLE);
+
+                showAction(goAction);
+            }
+        }
+        else
+        {
+            setTitle("");
+            findViewById(R.id.timetableContainer).setVisibility(View.GONE);
+
+            showAction(null);
         }
     }
 
     private String predictDelay(final int distance, final int scheduledArrivalTime)
     {
-        if (modeller == null || classifier == null) return "OnTime";
+        if (modeller == null || classifier == null) return "on time";
 
         try
         {
@@ -368,18 +413,22 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             Instance i = modeller.createInstance(distance, timeOfDay, dayOfWeek, scheduledArrivalTime, trafficLevel);
             double classIndex = classifier.classifyInstance(i);
 
-            return modeller.createRelation("Prediction").classAttribute().value((int) classIndex);
+            String predictedDelay = modeller.createRelation("Prediction").classAttribute().value((int) classIndex);
+
+            if (predictedDelay.startsWith("EarlyBy"))
+            {
+                return "early by " + predictedDelay.substring(7) + " seconds";
+            }
+            else if (predictedDelay.startsWith("LateBy"))
+            {
+                return "late by " + predictedDelay.substring(6) + " seconds";
+            }
+            else { return "on time"; }
         }
         catch (Exception e)
         {
-            return "OnTime";
+            return "on time";
         }
-    }
-
-    private void clearDisplay()
-    {
-        findViewById(R.id.enRouteContainer).setVisibility(View.GONE);
-        findViewById(R.id.trafficContainer).setVisibility(View.GONE);
     }
 
     private void overrideNext()
@@ -427,5 +476,10 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         LocationListener listener = new StandardLocationListener(this);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, locationSampleTime, 0, listener);
+    }
+
+    private boolean isEnRoute()
+    {
+        return currentJourney != null;
     }
 }

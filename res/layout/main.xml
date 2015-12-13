@@ -2,20 +2,20 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
-              android:layout_height="match_parent" android:background="#eee8d5">
-
+              android:layout_height="match_parent" android:background="#eee8d5" android:id="@+id/mainContainer">
     <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/scrollView" android:layout_gravity="center_horizontal">
+            android:id="@+id/enRouteContainer" android:layout_gravity="center_horizontal" android:fillViewport="false"
+            android:visibility="gone">
         <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent" android:id="@+id/enRouteInnerContainer">
             <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/enRouteContainer"
+                    android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:id="@+id/nextStopContainer"
                     android:paddingBottom="25dp">
                 <TextView
                         android:layout_width="fill_parent"
@@ -25,55 +25,51 @@
                         android:visibility="visible" android:text="5A for Tangkrogen" android:paddingTop="10dp"
                         android:textColor="#fdf6e3" android:gravity="center" android:background="#dc322f"
                 />
-                <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:text="@string/nextStopIsLabel"
-                        android:id="@+id/nextStopIsLabel" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
-                        android:paddingBottom="5dp" android:textColor="#002b36"/>
-                <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?android:attr/textAppearanceLarge"
-                        android:text="Silkeborgvej"
-                        android:id="@+id/nextStop" android:layout_gravity="center_horizontal" android:textColor="#002b36"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                          android:textAppearance="?android:attr/textAppearanceSmall"
+                          android:text="@string/nextStopIsLabel" android:id="@+id/nextStopIsLabel"
+                          android:layout_gravity="center_horizontal" android:paddingTop="15dp"
+                          android:paddingBottom="5dp" android:textColor="#002b36"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                          android:textAppearance="?android:attr/textAppearanceLarge" android:text="Silkeborgvej"
+                          android:id="@+id/nextStop" android:layout_gravity="center_horizontal"
+                          android:textColor="#002b36"/>
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:id="@+id/distanceToNextStop" android:layout_gravity="center_horizontal" android:textSize="36dp"
                         android:paddingTop="10dp" android:visibility="visible"
-                        android:text="150 m" android:paddingBottom="25dp" android:textColor="#002b36"/>
-                <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
-                        android:id="@+id/stopContainer" android:paddingBottom="0dp">
-                    <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
-                              android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/finalStopHeader"
-                              android:layout_gravity="center_horizontal" android:paddingBottom="10dp" android:visibility="visible"
-                              android:text="Randersvej" android:paddingTop="10dp" android:textColor="#fdf6e3"
-                              android:gravity="center" android:background="#2aa198"/>
-                    <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?android:attr/textAppearanceLarge"
-                            android:text="14:36"
-                            android:id="@+id/finalStopArrivalTime" android:layout_gravity="center_horizontal" android:paddingTop="10dp"
-                            android:textColor="#002b36"/>
-                    <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textAppearance="?android:attr/textAppearanceSmall"
-                            android:text="15 sec early"
-                            android:id="@+id/finalStopDelay" android:layout_gravity="center_horizontal" android:paddingTop="5dp"
-                            android:textColor="#002b36"/>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                              android:textAppearance="?android:attr/textAppearanceLarge" android:text="2000 m"
-                              android:id="@+id/distanceToFinalStop" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
-                              android:textColor="#002b36"/>
-                </LinearLayout>
+                        android:text="150 m" android:textColor="#002b36"/>
+            </LinearLayout>
+            <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:layout_gravity="center_horizontal"
+                    android:id="@+id/stopContainer" android:paddingBottom="25dp">
+                <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
+                          android:textAppearance="?android:attr/textAppearanceLarge" android:id="@+id/finalStopHeader"
+                          android:layout_gravity="center_horizontal" android:paddingBottom="10dp" android:visibility="visible"
+                          android:text="Randersvej" android:paddingTop="10dp" android:textColor="#fdf6e3"
+                          android:gravity="center" android:background="#2aa198"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:text="14:36"
+                        android:id="@+id/finalStopArrivalTime" android:layout_gravity="center_horizontal" android:paddingTop="10dp"
+                        android:textColor="#002b36"/>
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="15 sec early"
+                        android:id="@+id/finalStopDelay" android:layout_gravity="center_horizontal" android:paddingTop="5dp"
+                        android:textColor="#002b36"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                          android:textAppearance="?android:attr/textAppearanceLarge" android:text="2000 m"
+                          android:id="@+id/distanceToFinalStop" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
+                          android:textColor="#002b36"/>
             </LinearLayout>
             <LinearLayout
                     android:orientation="vertical"
@@ -97,4 +93,28 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" android:id="@+id/timetableContainer">
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:text="@string/nextBusLeavesAtLabel"
+                android:id="@+id/nextBusLeavesAtLabel" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
+                android:paddingBottom="10dp" android:textColor="#002b36"/>
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="14:45"
+                android:id="@+id/nextDepartureTime" android:layout_gravity="center_horizontal" android:textColor="#002b36"
+                android:textSize="36dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                  android:textAppearance="?android:attr/textAppearanceSmall"
+                  android:id="@+id/nextDepartureDirection" android:layout_gravity="center_horizontal"
+                  android:textColor="#002b36"
+                  android:text="for Silkeborgvej" android:paddingTop="5dp"/>
+    </LinearLayout>
 </LinearLayout>

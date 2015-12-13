@@ -22,7 +22,6 @@ public class Modeller
     private final Weather weather;
     private final Route route;
 
-    private final int locationSampleTime;
     private final int nearbyStopDistanceThreshold;
 
     private final Map<Stop, List<Sample>> models = new HashMap<Stop, List<Sample>>();
@@ -43,14 +42,12 @@ public class Modeller
     public Modeller(final ModelFinishedListener listener,
                     final Journey journey,
                     final Weather weather,
-                    final int locationSampleTime,
                     final int nearbyStopDistanceThreshold)
     {
         this.listener = listener;
         this.journey = journey;
         this.weather = weather;
         this.route = journey.getRoute();
-        this.locationSampleTime = locationSampleTime;
         this.nearbyStopDistanceThreshold = nearbyStopDistanceThreshold;
 
         for (Stop stop : this.route)
@@ -81,8 +78,18 @@ public class Modeller
         scheduledTimeOfArrivalAttribute = new Attribute("scheduledTimeOfArrival");
         features.addElement(scheduledTimeOfArrivalAttribute);
 
-        // Weather: String.
-        weatherAttribute = new Attribute("weather", (FastVector) null);
+        // Weather: Nominal (weather conditions).
+        FastVector weatherConditions = new FastVector(8);
+        weatherConditions.addElement("Thunderstorm");
+        weatherConditions.addElement("Drizzle");
+        weatherConditions.addElement("Rain");
+        weatherConditions.addElement("Snow");
+        weatherConditions.addElement("Atmosphere");
+        weatherConditions.addElement("Clear");
+        weatherConditions.addElement("Clouds");
+        weatherConditions.addElement("Extreme");
+
+        weatherAttribute = new Attribute("weather", weatherConditions);
         features.addElement(weatherAttribute);
 
         // Temperature: Numeric (degrees Celsius).
@@ -248,9 +255,7 @@ public class Modeller
     private boolean isNearStop(final Stop nextStop, final Location location)
     {
         int distanceToNextStop = (int) Math.floor(location.distanceTo(nextStop.getLocation()));
-
-        return distanceToNextStop < nearbyStopDistanceThreshold
-               || distanceToNextStop < (locationSampleTime / 1000 * location.getSpeed());
+        return distanceToNextStop < nearbyStopDistanceThreshold;
     }
 
     private void aggregateSamplesToAverages(final Stop nextStop)

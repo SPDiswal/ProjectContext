@@ -9,4 +9,6 @@
     <string name="actionLocatingProgress">Locating…</string>
     <string name="ready">Ready!</string>
     <string name="nextStopIsLabel">The next stop is</string>
+    <string name="nextBusLeavesAtLabel">The next bus leaves at</string>
+    <string name="and">and</string>
 </resources>
