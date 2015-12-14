@@ -223,7 +223,6 @@ public class Modeller
         instance.setValue(windDirectionAttribute, weather.getWindDirection());
         instance.setValue(precipitationAttribute, weather.getPrecipitation());
         instance.setValue(trafficAttribute, trafficLevel);
-//        instance.setClassMissing();
 
         return instance;
     }

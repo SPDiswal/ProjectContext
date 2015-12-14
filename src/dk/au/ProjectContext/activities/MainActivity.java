@@ -5,6 +5,7 @@ import android.content.Context;
 import android.location.*;
 import android.os.*;
 import android.os.Environment;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import dk.au.ProjectContext.R;
@@ -241,7 +242,7 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         fiveMinutesAgo.add(Calendar.MINUTE, -5);
 
         new DeparturesTask(this, routes).execute(currentRoute.first(), fiveMinutesAgo.getTime());
-        new ClassifierTask(this).execute(currentRoute.getId(), currentRoute.last().getId());
+        new ClassifierTask(this, getAssets()).execute(currentRoute.getId(), currentRoute.last().getId());
     }
 
     private Route getNearestRoute()
@@ -410,10 +411,12 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
             c.setTime(today);
             int dayOfWeek = c.get(Calendar.DAY_OF_WEEK);
 
+            Instances predictionRelation = modeller.createRelation("Prediction");
             Instance i = modeller.createInstance(distance, timeOfDay, dayOfWeek, scheduledArrivalTime, trafficLevel);
-            double classIndex = classifier.classifyInstance(i);
+            i.setDataset(predictionRelation);
 
-            String predictedDelay = modeller.createRelation("Prediction").classAttribute().value((int) classIndex);
+            double classIndex = classifier.classifyInstance(i);
+            String predictedDelay = predictionRelation.classAttribute().value((int) classIndex);
 
             if (predictedDelay.startsWith("EarlyBy"))
             {
