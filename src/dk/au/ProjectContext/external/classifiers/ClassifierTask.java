@@ -38,8 +38,6 @@ public class ClassifierTask extends AsyncTask<String, Void, Classifier>
         {
         }
 
-        Log.d("ClassifierTask", "Classifier failed to load");
-
         return null;
     }
 
@@ -48,9 +46,6 @@ public class ClassifierTask extends AsyncTask<String, Void, Classifier>
         ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
         Classifier classifier = (Classifier) objectInputStream.readObject();
         objectInputStream.close();
-
-        Log.d("ClassifierTask", "Classifier loaded successfully");
-
         return classifier;
     }
 
