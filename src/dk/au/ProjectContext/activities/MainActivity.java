@@ -219,7 +219,16 @@ public class MainActivity extends Activity implements RoutesTask.RoutesTaskListe
         Stop nearestStopSoFar = null;
         int smallestDistanceSoFar = Integer.MAX_VALUE;
 
-        for (Stop stop : stops)
+        List<Stop> possibleStops = new ArrayList<>();
+
+        if(isEnRoute()){
+            possibleStops = currentRoute.getStops();
+        }
+        else{
+            possibleStops.addAll(stops);
+        }
+
+        for (Stop stop : possibleStops)
         {
             Location locationOfStop = stop.getLocation();
             int distanceToStop = (int) Math.ceil(location.distanceTo(locationOfStop));
